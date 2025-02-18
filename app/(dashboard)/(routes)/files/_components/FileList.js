@@ -19,6 +19,34 @@ function FileList({ fileList, onDeleteFile }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
   const dropdownRef = useRef();
+  const tableRef = useRef();
+
+  useEffect(() => {
+    if (fileList.length >= 7 && tableRef.current) {
+      const tableContainer = tableRef.current;
+      let scrollDirection = 'down';
+      const scrollSpeed = 1;
+      
+      const scroll = () => {
+        if (scrollDirection === 'down') {
+          if (tableContainer.scrollTop + tableContainer.clientHeight >= tableContainer.scrollHeight) {
+            scrollDirection = 'up';
+          } else {
+            tableContainer.scrollTop += scrollSpeed;
+          }
+        } else {
+          if (tableContainer.scrollTop <= 0) {
+            scrollDirection = 'down';
+          } else {
+            tableContainer.scrollTop -= scrollSpeed;
+          }
+        }
+      };
+
+      const intervalId = setInterval(scroll, 50);
+      return () => clearInterval(intervalId);
+    }
+  }, [fileList]);
 
   const handleGenerateQR = async (file) => {
     try {
@@ -51,7 +79,7 @@ function FileList({ fileList, onDeleteFile }) {
           <ul className="py-2 text-sm text-gray-700">
             <li>
               <Link
-                href={`/file-preview/${file.id}`} // Correctly format the link
+                href={`/file-preview/${file.id}`}
                 className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -71,7 +99,7 @@ function FileList({ fileList, onDeleteFile }) {
             </li>
             <li>
               <Link
-                href={`/f/${file.id}`} // Correctly format the link
+                href={`/f/${file.id}`}
                 className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -87,34 +115,47 @@ function FileList({ fileList, onDeleteFile }) {
   );
 
   const getFileType = (fileType) => {
-    return fileType.split('/')[1]; // Simplified file type
+    return fileType.split('/')[1];
   };
 
   return (
-    <div className="max-h-[700px] mt-7 overflow"> {/* Removed overflow-x-auto for horizontal scrolling on medium and larger devices */}
-      <div className="w-full"> {/* Ensured the table takes up full width */}
-        <table className="table-auto w-full border border-gray-300 bg-white text-sm text-left text-gray-500 rounded-lg">
-          <thead className="bg-gray-100 border-b-2 border-gray-300 text-left">
-            <tr>
-              <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">File Name</th>
-              <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Type</th>
-              <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Size</th>
-              <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {fileList.map((file, index) => (
-              <tr className="odd:bg-gray-50" key={index}>
-                <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{file.fileName}</td>
-                <td className="whitespace-nowrap px-4 py-2 text-gray-700">{getFileType(file.fileType)}</td>
-                <td className="whitespace-nowrap px-4 py-2 text-gray-700">{(file.fileSize / 1024 / 1024).toFixed(2)} MB</td>
-                <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                  {renderDropdown(file, index)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="max-h-[700px] mt-7">
+      <div className="w-full overflow-x-auto">
+        <div className="inline-block min-w-full align-middle">
+          <div className="overflow-hidden" ref={tableRef} style={{ maxHeight: '500px', overflowY: 'auto' }}>
+            <table className="min-w-full divide-y divide-gray-300 border border-gray-300 bg-white text-sm text-left text-gray-500 rounded-lg">
+              <thead className="bg-gray-100 border-b-2 border-gray-300 text-left">
+                <tr>
+                  <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">File Name</th>
+                  <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Type</th>
+                  <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Size</th>
+                  <th className="whitespace-nowrap px-4 py-2 font-medium text-gray-900"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {fileList.map((file, index) => (
+                  <tr className="odd:bg-gray-50" key={index}>
+                    <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">{file.fileName}</td>
+                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">{getFileType(file.fileType)}</td>
+                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">{(file.fileSize / 1024 / 1024).toFixed(2)} MB</td>
+                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
+                      {renderDropdown(file, index)}
+                    </td>
+                  </tr>
+                ))}
+                {/* Add three empty rows */}
+                {[...Array(3)].map((_, i) => (
+                  <tr key={`empty-${i}`} className={i % 2 === 0 ? 'odd:bg-gray-50' : 'even:bg-white'}>
+                    <td className="whitespace-nowrap px-4 py-2">&nbsp;</td>
+                    <td className="whitespace-nowrap px-4 py-2">&nbsp;</td>
+                    <td className="whitespace-nowrap px-4 py-2">&nbsp;</td>
+                    <td className="whitespace-nowrap px-4 py-2">&nbsp;</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       {/* QR Code Dialog */}
